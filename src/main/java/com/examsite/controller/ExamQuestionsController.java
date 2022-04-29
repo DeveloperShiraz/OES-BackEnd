@@ -1,7 +1,7 @@
 package com.examsite.controller;
 
 import java.util.List;
-import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -12,8 +12,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.examsite.dto.ExamQuestionsByEmailIdDTO;
 import com.examsite.dto.RandomExamQuestionsDTO;
+import com.examsite.model.ExamHistoryModel;
 import com.examsite.model.ExamQuestionsModel;
 import com.examsite.service.ExamQuestionsService;
 
@@ -64,5 +66,10 @@ public class ExamQuestionsController {
 	@GetMapping("/getExamQuestionsByEmailId")
 	public ExamQuestionsByEmailIdDTO getExamQuestionsByEmailId(@RequestParam String emailId, @RequestParam Integer page){
 		return examQuestionsService.getExamQuestionsByEmailId(emailId, PageRequest.of(page,1));
+	}
+	
+	@GetMapping("/validateExam")
+	public ExamHistoryModel validateExam(@RequestParam String emailId) {
+		return examQuestionsService.validateExam(emailId);
 	}
 }

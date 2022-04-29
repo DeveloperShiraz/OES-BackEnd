@@ -8,6 +8,7 @@ import javax.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import com.examsite.dto.ExamQuestionsByEmailIdDTO;
 import com.examsite.dto.RandomExamQuestionsDTO;
@@ -88,7 +89,9 @@ public class ExamQuestionsServiceImpl implements ExamQuestionsService{
 		List<ActiveExamQuestionsModel> activeExamQuestionsList = new ArrayList<>();
 		for(RandomExamQuestionsDTO randomQuestion: randomQuestionsList){
 			ActiveExamQuestionsModel activeQuestion = new ActiveExamQuestionsModel();
-			activeQuestion.setQuestionId(randomQuestion.getQuestionId());
+			ExamQuestionsModel examQuestionsModel = new ExamQuestionsModel();
+			examQuestionsModel.setQuestionId(randomQuestion.getQuestionId());
+			activeQuestion.setQuestionId(examQuestionsModel);
 			activeQuestion.setExamHistoryId(examHistory.getExamHistoryId());
 			activeQuestion.setExamStatus("Test_started");
 			activeExamQuestionsList.add(activeQuestion);
@@ -107,14 +110,34 @@ public class ExamQuestionsServiceImpl implements ExamQuestionsService{
 	
 	@Override
 	public ExamQuestionsByEmailIdDTO getExamQuestionsByEmailId(String emailId, Pageable pageRequest) {
-		Tuple tupleList = examQuestionsRepo.getExamQuestionsByEmailId(emailId, pageRequest);
-		List<ExamQuestionsByEmailIdDTO> resultList = new ArrayList<>();
-		ExamQuestionsByEmailIdDTO examQuestionsByEmailIdDTO = new ExamQuestionsByEmailIdDTO(tupleList);
+		Integer examHistoryId = examQuestionsRepo.getExamHistoryByEmailId(emailId);
+		List<Integer> questionId = examQuestionsRepo.getQuestionIdByExamHistoryId(examHistoryId, pageRequest);
+		List<Tuple> tupleList = examQuestionsRepo.getExamQuestionsByEmailId(questionId.get(0));
+		ExamQuestionsByEmailIdDTO examQuestionsByEmailIdDTO = new ExamQuestionsByEmailIdDTO(tupleList.get(0));
 		return examQuestionsByEmailIdDTO;
 	}
-//	for(Tuple t:tupleList){
-//		resultList.add(new RandomExamQuestionsDTO(t));
-//	}
-//	return resultList;
-//}
+
+	@Override
+	public ExamHistoryModel validateExam(String emailId) {
+		List<ExamHistoryModel> examHistory = examHistoryRepo.findByEmailIdOrderByExamHistoryIdDesc(emailId,PageRequest.of(0,1));
+		List<ActiveExamQuestionsModel> activeExamQuestionsModelList = activeExamQuestionsRepo.getByExamHistoryId(examHistory.get(0).getExamHistoryId());
+		Integer userAtemptedQuestionsCount = 0;
+		Integer marksGained = 0;
+		for(ActiveExamQuestionsModel activeExamQuestionsModel :activeExamQuestionsModelList) {
+			if(null != activeExamQuestionsModel.getUserAnswer()) {
+				userAtemptedQuestionsCount++;
+				if(activeExamQuestionsModel.getUserAnswer().equals(activeExamQuestionsModel.getQuestionId().getAnswer())) {
+					marksGained++;
+				}
+			}
+		}
+		Double percentage = (double) (marksGained.doubleValue()/examHistory.get(0).getActualNoOfQuestions().doubleValue())*100;
+		System.out.println(percentage);
+		String examStatus = percentage > 50?"Pass":"Fail";
+		examHistory.get(0).setMarksGained(marksGained);
+		examHistory.get(0).setNoOfQuestionsAttempted(userAtemptedQuestionsCount);
+		examHistory.get(0).setExamStatus(examStatus);
+		ExamHistoryModel examHistoryres = examHistoryRepo.save(examHistory.get(0));
+		return examHistoryres;
+	}
 }

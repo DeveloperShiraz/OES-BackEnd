@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.examsite.dto.ExamQuestionsByEmailIdDTO;
 import com.examsite.dto.RandomExamQuestionsDTO;
+import com.examsite.model.ExamHistoryModel;
 import com.examsite.model.ExamQuestionsModel;
 
 public interface ExamQuestionsService {
@@ -19,4 +20,6 @@ public interface ExamQuestionsService {
 	public String setupExamConfiguration(String emailId);
 	public void saveUserAnswer(String userAnswer, Integer questionId, String emailId);
 	public ExamQuestionsByEmailIdDTO getExamQuestionsByEmailId(String emailId, Pageable pageRequest);
+	
+	public ExamHistoryModel validateExam(String emailId);
 }

@@ -38,5 +38,5 @@ public class ExamQuestionsModel {
 	private String optionD;
 	
 	@Column(name="answer")
-	private Character answer;
+	private String answer;
 }
